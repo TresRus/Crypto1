@@ -12,12 +12,14 @@ def random(size=16):
     return open("/dev/urandom").read(size)
 
 def encrypt(key, msg):
-    c = strxor(key, msg)
-    print
-    print c.encode('hex')
-    return c
+    return strxor(key, msg)
 
-with open(sys.argv[0]) as f:
-    messages = f.readlines()
-    key = random(1024)
-    print(encrypt(key, msg)) for msg in messages
+if len(sys.argv) >= 2:
+    with open(sys.argv[1]) as f:
+        messages = f.readlines()
+        key = random(1024)
+        for msg in messages:
+            m = msg.strip()
+            print m
+            print m.encode('hex')
+            print encrypt(key, m).encode('hex')
