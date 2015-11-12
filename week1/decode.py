@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys
+import sys, operator
 
 def strxor(a, b):     # xor two strings of different lengths
     if len(a) > len(b):
@@ -12,26 +12,39 @@ def decode(key, c):
     return strxor(key, c)
 
 def hackAll(key, ciphers):
-    newKey = key
-    for i in range(0, len(ciphers)-2):
-        for j in range(i+1, len(ciphers)-1):
-            for k in range(j+1, len(ciphers)):
-                for c in list(" .'"):
-                    newKey = hack(newKey, ciphers[i], ciphers[j], ciphers[k], c)
-                    newKey = hack(newKey, ciphers[j], ciphers[i], ciphers[k], c)
-                    newKey = hack(newKey, ciphers[k], ciphers[j], ciphers[i], c)
-    return newKey
+    newKey = list(hackSpace(key, ciphers))
+    shortest = min(ciphers, key=len)
+    for chPos in range(0, len(shortest)):
+        if newKey[chPos] == chr(0):
+            gist = {}
+            for cph in ciphers:
+                if gist.has_key(cph[chPos]):
+                    gist[cph[chPos]] = gist[cph[chPos]] + 1
+                else:
+                    gist[cph[chPos]] = 1
+            newKey[chPos] = strxor(max(gist.iteritems(), key=operator.itemgetter(1))[0], "e")[0]
+    return "".join(newKey)
 
-def hack(key, c1, c2, c3, ch):
+def isAllAlpha(lines, pos):
+    for line in lines:
+        if not line[pos].isalpha():
+            return False
+    return True
+
+def hackSpace(key, ciphers):
     newKey = list(key)
-    x1 = strxor(c1, c2)
-    y1 = strxor(x1, ch * 1024)
-    x2 = strxor(c1, c3)
-    y2 = strxor(x2, ch * 1024)
-    d = list(strxor(c1, ch * 1024))
-    for i in range(0, min([len(c1), len(c2), len(c3)])):
-        if y1[i].isalpha() and y2[i].isalpha():
-            newKey[i] = d[i]
+    c = " "
+    for i in range(0, len(ciphers)):
+        xored = []
+        d = list(strxor(ciphers[i], c * 1024))
+        for j in range(0, len(ciphers)):
+            if i != j and len(ciphers[i]) <= len(ciphers[j]):
+                xored.append(strxor(ciphers[i], ciphers[j]))
+        if len(xored) > 1:
+            for chPos in range(0, len(ciphers[i])):
+                if isAllAlpha(xored, chPos):
+                    newKey[chPos] = d[chPos]
+
     return "".join(newKey)
 
 if len(sys.argv) >= 2:
@@ -44,6 +57,10 @@ if len(sys.argv) >= 2:
         print "KEY:"
         print key.encode('hex')
         print len(key)
-#        for cph in ciphers:
-#            print cph.encode('hex')
-#            print decode(key, cph)
+        for i in range(0, len(ciphers)):
+            cph = ciphers[i]
+            print i
+            print "Cipher:"
+            print cph.encode('hex')
+            print "Decode:"
+            print decode(key, cph)
